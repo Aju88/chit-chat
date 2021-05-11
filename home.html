@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link href="chatstyle.css" rel="stylesheet" />
+    <title>chit-chat</title>
+    <script src="https://www.gstatic.com/firebasejs/8.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.5.0/firebase-database.js"></script>
+
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-box">
+        <header class="base">
+          <p>Chit-Chat</p>
+        </header>
+
+        <div class="message-container">
+          <div class="contacts">
+            <ul id="contact-list"></ul>
+          </div>
+          <div class="messenger-box">
+          <div class="parent-msg-box">
+          
+          <div class="message-box">
+            <ul id="messages-received"></ul>
+          </div>
+        </div>
+          <footer>
+            <input
+              type="text"
+              class="message-sent"
+              id="message-sent"
+              name="message-sent"
+              required
+              placeholder="Enter Message"
+            />
+            <button type="submit" onclick="saveMessage()" class="sub-button">
+              Send
+            </button>
+          </footer>
+        </div>
+        </div>
+      </div>
+      <button class="sub-button" onclick="mainApp.logOut()">LogOut</button>
+    </div>
+    <script src="firebase.js"></script>
+    <script type="text/javascript" src="myscript.js"></script>
+  </body>
+</html>
