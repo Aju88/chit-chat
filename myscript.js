@@ -29,9 +29,11 @@ let userName = null,
 //---------------------set the receiver--------------------//
 function selectUser(user) {
   receiver = user;
-  document.getElementById("messages-received").innerHTML = "";
-
+  var selected_user = document.getElementById("user-contact");
+  document.getElementById("'" + receiver + "'").style.display = "none";
+  selected_user.innerHTML += `<li><button id="'${receiver}'" >${receiver}</li>`;
   getData();
+  document.getElementById("messages-received").innerHTML = "";
 }
 
 var db = firebase.database();
@@ -43,11 +45,12 @@ db.ref("Messages/" + userName).set({
 
 function saveMessage() {
   var message = document.getElementById("message-sent").value;
-  db.ref("Messages/" + receiver + "/" + userName).set({
+  db.ref("Messages/" + receiver + "/" + userName).update({
     sender: userName,
     message: message,
   });
   getSentData();
+
   return false;
 }
 
@@ -68,7 +71,7 @@ function getData() {
     document.getElementById("messages-received").innerHTML += html;
   });
 }
-
+var p = 0;
 //---------------to get sent meessage ------------------------//
 function getSentData() {
   console.log(userName);
@@ -76,8 +79,8 @@ function getSentData() {
   var user_ref = db.ref("Messages/" + receiver + "/" + userName);
   user_ref.on("value", (snapshot) => {
     var data = snapshot.val();
-    console.log(data);
-
+    console.log(p);
+    p++;
     html = "";
     html += "<li>";
     html += "You" + " : " + data.message;
@@ -94,24 +97,24 @@ function getContacts() {
   user_ref.on("value", function (snapshot) {
     var users = Object.getOwnPropertyNames(snapshot.val());
     // console.log("users are: " + users);
-    for (let j = 0; j < users.length; j++) {
-      if (users[j] === userName) {
-        temp = users[0];
-        users[0] = users[j];
-        users[j] = temp;
-      }
-    }
-    var html = "";
+
+    var contactHtml = "",
+      userHtml = "";
 
     for (let i = 0; i < users.length; i++) {
-      html += `<li><button onclick="selectUser('${users[i]}')">`;
       if (users[i] === userName) {
-        html += users[i] + "(You)";
+        userHtml += `<li>`;
+
+        userHtml += users[i] + "(You)";
       } else {
-        html += users[i];
+        contactHtml += `<li><button id="'${users[i]}'" onclick="selectUser('${users[i]}')">`;
+
+        contactHtml += users[i];
       }
-      html += "</button></li>";
+      contactHtml += "</button></li>";
+      userHtml += "</li>";
     }
-    document.getElementById("contact-list").innerHTML = html;
+    document.getElementById("contact-list").innerHTML = contactHtml;
+    document.getElementById("user-contact").innerHTML = userHtml;
   });
 }
