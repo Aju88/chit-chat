@@ -1,16 +1,21 @@
 var mainApp = {};
 let userName = null,
-  receiver = null;
+  receiver = null,
+  moved_contact = null;
+if (userName != null) {
+  db.ref("Messages/" + userName).set({
+    message: "logged in as " + userName,
+  });
+}
 (function () {
   var firebase = app_fireBase;
   var uid = null;
   firebase.auth().onAuthStateChanged(function (user) {
-    if (user) {
+    if (user != null) {
       // User is signed in.
       console.log("logged in as " + user.displayName);
       userName = user.displayName;
       // console.log(userName);
-
       uid = user.uid;
     } else {
       uid = null;
@@ -29,17 +34,36 @@ let userName = null,
 //---------------------set the receiver--------------------//
 function selectUser(user) {
   receiver = user;
-  var selected_user = document.getElementById("user-contact");
-  document.getElementById("'" + receiver + "'").style.display = "none";
-  selected_user.innerHTML += `<li><button id="'${receiver}'" >${receiver}</li>`;
-  getData();
-  document.getElementById("messages-received").innerHTML = "";
+  var contact_list = document.getElementById("contact-list"); //in the contact list
+  var selected_user = document.getElementById("selected-contact"); //in messaging list
+  document.getElementById("'" + receiver + "'").style.display = "none"; //hiding the selected contact from contacts list
+
+    //moving contact from contacts list to messaging list on reselecting
+  var selected_again = document.getElementsByClassName("contact")[0];
+  if (selected_again) {
+    console.log(selected_again);
+    selected_again.style.display = "none";
+  }
+
+  //moving previously messaged contact from messaging list to contact list
+  var currnt_user = document.getElementsByClassName("current")[0];
+  if (currnt_user) {
+    currnt_user.style.display = "none";
+    console.log(currnt_user.innerHTML);
+
+    contact_list.innerHTML += ` <li class="contact" id="'${moved_contact}'">${currnt_user.innerHTML}</li> `;
+  }
+
+  //adding selected contact from contact list to messaging list
+  selected_user.innerHTML = `<li id="'${receiver}'" class=
+  "current"><button  onclick="selectUser('${receiver}')" >${receiver}</li>`;
+  moved_contact=user;//to get the previously messaged contacts id
+  document.getElementById("messages-received").innerHTML = ""; //to get the previously received msg
+
+  getData();//getting messages received from the selected contact
 }
 
 var db = firebase.database();
-db.ref("Messages/" + userName).set({
-  message: "logged in as " + userName,
-});
 
 //--------------------send a message---------------------//
 
@@ -66,7 +90,7 @@ function getData() {
 
     var html = "";
     html += "<li>";
-    html += data.sender + " : " + data.message;
+    html += data.message;
     html += "</li>";
     document.getElementById("messages-received").innerHTML += html;
   });
@@ -74,16 +98,15 @@ function getData() {
 var p = 0;
 //---------------to get sent meessage ------------------------//
 function getSentData() {
-  console.log(userName);
+  console.log(p);
   var html;
   var user_ref = db.ref("Messages/" + receiver + "/" + userName);
   user_ref.on("value", (snapshot) => {
     var data = snapshot.val();
-    console.log(p);
     p++;
     html = "";
-    html += "<li>";
-    html += "You" + " : " + data.message;
+    html += `<li class="sent">`;
+    html += data.message;
     html += "</li>";
     document.getElementById("messages-received").innerHTML += html;
   });
@@ -92,7 +115,6 @@ function getSentData() {
 //--------------------getting the available contacts to send messsage-------------------//
 
 function getContacts() {
-  var temp = "";
   var user_ref = db.ref("Messages");
   user_ref.on("value", function (snapshot) {
     var users = Object.getOwnPropertyNames(snapshot.val());
@@ -103,11 +125,11 @@ function getContacts() {
 
     for (let i = 0; i < users.length; i++) {
       if (users[i] === userName) {
-        userHtml += `<li>`;
+        userHtml += `<li id="logged-user">`;
 
         userHtml += users[i] + "(You)";
       } else {
-        contactHtml += `<li><button id="'${users[i]}'" onclick="selectUser('${users[i]}')">`;
+        contactHtml += `<li id="'${users[i]}'"><button  onclick="selectUser('${users[i]}')">`;
 
         contactHtml += users[i];
       }
