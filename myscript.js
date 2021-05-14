@@ -2,11 +2,7 @@ var mainApp = {};
 let userName = null,
   receiver = null,
   moved_contact = null;
-if (userName != null) {
-  db.ref("Messages/" + userName).set({
-    message: "logged in as " + userName,
-  });
-}
+
 (function () {
   var firebase = app_fireBase;
   var uid = null;
@@ -15,16 +11,21 @@ if (userName != null) {
       // User is signed in.
       console.log("logged in as " + user.displayName);
       userName = user.displayName;
+      if (userName != null) {
+        db.ref("Messages/" + userName).set({
+          message: "logged in as " + userName,
+        });
+      }
       // console.log(userName);
       uid = user.uid;
     } else {
       uid = null;
       //redirect to login page
-      window.location.replace("login.html");
+      window.location.replace("index.html");
     }
     getContacts();
   });
-  //----logount funtion---------//
+  //------------------logount funtion--------------------//
   function logOut() {
     firebase.auth().signOut();
   }
@@ -38,7 +39,7 @@ function selectUser(user) {
   var selected_user = document.getElementById("selected-contact"); //in messaging list
   document.getElementById("'" + receiver + "'").style.display = "none"; //hiding the selected contact from contacts list
 
-    //moving contact from contacts list to messaging list on reselecting
+  //moving contact from contacts list to messaging list on reselecting
   var selected_again = document.getElementsByClassName("contact")[0];
   if (selected_again) {
     console.log(selected_again);
@@ -57,10 +58,10 @@ function selectUser(user) {
   //adding selected contact from contact list to messaging list
   selected_user.innerHTML = `<li id="'${receiver}'" class=
   "current"><button  onclick="selectUser('${receiver}')" >${receiver}</li>`;
-  moved_contact=user;//to get the previously messaged contacts id
+  moved_contact = user; //to get the previously messaged contacts id
   document.getElementById("messages-received").innerHTML = ""; //to get the previously received msg
 
-  getData();//getting messages received from the selected contact
+  getData(); //getting messages received from the selected contact
 }
 
 var db = firebase.database();
@@ -78,7 +79,7 @@ function saveMessage() {
   return false;
 }
 
-//-------------get message received-------------------//
+//------------------get message received-------------------//
 
 function getData() {
   console.log(userName);
@@ -86,13 +87,13 @@ function getData() {
   var user_ref = db.ref("Messages/" + userName + "/" + receiver);
   user_ref.on("value", (snapshot) => {
     var data = snapshot.val();
-    console.log(data);
-
-    var html = "";
-    html += "<li>";
-    html += data.message;
-    html += "</li>";
-    document.getElementById("messages-received").innerHTML += html;
+    if (data) {
+      var html = "";
+      html += "<li>";
+      html += data.message;
+      html += "</li>";
+      document.getElementById("messages-received").innerHTML += html;
+    }
   });
 }
 var p = 0;
