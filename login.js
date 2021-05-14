@@ -27,11 +27,10 @@
       // firebase.auth.PhoneAuthProvider.PROVIDER_ID,
 
       firebase.auth.EmailAuthProvider.PROVIDER_ID,
-    ], 
+    ],
     // Terms of service url.
     tosUrl: "home.html",
     privacyPolicyUrl: "home.html",
   };
   ui.start("#firebaseui-auth-container", uiConfig);
 })();
- 
