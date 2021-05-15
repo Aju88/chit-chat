@@ -1,9 +1,14 @@
-var mainApp = {};
+var mainApp={};
 let userName = null,
   receiver = null,
-  moved_contact = null;
-
-(function () {
+  previous_contact = null;
+var message = "";
+var users = "";
+var selectedArray = [],
+  contactArray = [];
+var contactHtml = "",
+  userHtml = "";
+(function() {
   var firebase = app_fireBase;
   var uid = null;
   firebase.auth().onAuthStateChanged(function (user) {
@@ -16,7 +21,6 @@ let userName = null,
           message: "logged in as " + userName,
         });
       }
-      // console.log(userName);
       uid = user.uid;
     } else {
       uid = null;
@@ -34,33 +38,26 @@ let userName = null,
 
 //---------------------set the receiver--------------------//
 function selectUser(user) {
-  receiver = user;
-  var contact_list = document.getElementById("contact-list"); //in the contact list
+  console.log(users);
+  var position = users.indexOf(user);
+  console.log(position);
+  var selected;
+  for (i = 0; i < users.length; i++) {
+    if (user === users[i]) {
+      selected = users[i];
+      users.splice(i, 1);
+      i--;
+      if (previous_contact != null) {
+        users.unshift(previous_contact);
+      }
+    }
+  }
   var selected_user = document.getElementById("selected-contact"); //in messaging list
-  document.getElementById("'" + receiver + "'").style.display = "none"; //hiding the selected contact from contacts list
-
-  //moving contact from contacts list to messaging list on reselecting
-  var selected_again = document.getElementsByClassName("contact")[0];
-  if (selected_again) {
-    console.log(selected_again);
-    selected_again.style.display = "none";
-  }
-
-  //moving previously messaged contact from messaging list to contact list
-  var currnt_user = document.getElementsByClassName("current")[0];
-  if (currnt_user) {
-    currnt_user.style.display = "none";
-    console.log(currnt_user.innerHTML);
-
-    contact_list.innerHTML += ` <li class="contact" id="'${moved_contact}'">${currnt_user.innerHTML}</li> `;
-  }
-
-  //adding selected contact from contact list to messaging list
-  selected_user.innerHTML = `<li id="'${receiver}'" class=
-  "current"><button  onclick="selectUser('${receiver}')" >${receiver}</li>`;
-  moved_contact = user; //to get the previously messaged contacts id
-  document.getElementById("messages-received").innerHTML = ""; //to get the previously received msg
-
+  selected_user.innerHTML = `<li id="selected">${selected}</li>`;
+  showContacts(users);
+  previous_contact = user;
+  receiver = user;
+  document.getElementById("messages-received").innerHTML = ""; //to clear the messages
   getData(); //getting messages received from the selected contact
 }
 
@@ -68,15 +65,24 @@ var db = firebase.database();
 
 //--------------------send a message---------------------//
 
+var input = document.getElementById("message-sent");
+//enter key to send
+input.addEventListener("keyup", (event) => {
+  if (event.keyCode === 13) {
+    event.preventDefault();
+    saveMessage();
+    input.value = "";
+  }
+});
 function saveMessage() {
-  var message = document.getElementById("message-sent").value;
+  message = input.value;
   db.ref("Messages/" + receiver + "/" + userName).update({
     sender: userName,
     message: message,
   });
+  console.log("repeat");
   getSentData();
-
-  return false;
+  input.value = "";
 }
 
 //------------------get message received-------------------//
@@ -97,12 +103,12 @@ function getData() {
   });
 }
 var p = 0;
+
 //---------------to get sent meessage ------------------------//
 function getSentData() {
-  console.log(p);
   var html;
   var user_ref = db.ref("Messages/" + receiver + "/" + userName);
-  user_ref.on("value", (snapshot) => {
+  user_ref.once("value", (snapshot) => {
     var data = snapshot.val();
     p++;
     html = "";
@@ -117,27 +123,30 @@ function getSentData() {
 
 function getContacts() {
   var user_ref = db.ref("Messages");
-  user_ref.on("value", function (snapshot) {
-    var users = Object.getOwnPropertyNames(snapshot.val());
-    // console.log("users are: " + users);
-
-    var contactHtml = "",
-      userHtml = "";
-
-    for (let i = 0; i < users.length; i++) {
-      if (users[i] === userName) {
-        userHtml += `<li id="logged-user">`;
-
-        userHtml += users[i] + "(You)";
-      } else {
-        contactHtml += `<li id="'${users[i]}'"><button  onclick="selectUser('${users[i]}')">`;
-
-        contactHtml += users[i];
-      }
-      contactHtml += "</button></li>";
-      userHtml += "</li>";
-    }
-    document.getElementById("contact-list").innerHTML = contactHtml;
-    document.getElementById("user-contact").innerHTML = userHtml;
+  user_ref.once("value", function (snapshot) {
+    users = Object.getOwnPropertyNames(snapshot.val());
+    showContacts(users);
   });
+}
+
+function showContacts(userList) {
+  contactHtml = "";
+  for (let i = 0; i < userList.length; i++) {
+    if (userList[i] === userName) {
+      userHtml += `<li id="logged-user">`;
+      console.log("its here");
+
+      userHtml += userList[i] + "(You)";
+      userList.splice(i, 1);
+      i--;
+    } else {
+      contactHtml += `<li id="'${userList[i]}'"><button  onclick="selectUser('${userList[i]}')">`;
+
+      contactHtml += userList[i];
+    }
+    contactHtml += "</button></li>";
+    userHtml += "</li>";
+  }
+  document.getElementById("contact-list").innerHTML = contactHtml;
+  document.getElementById("user-contact").innerHTML = userHtml;
 }
