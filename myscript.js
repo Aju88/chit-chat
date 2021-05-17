@@ -1,4 +1,4 @@
-var mainApp={};
+var mainApp = {};
 let userName = null,
   receiver = null,
   previous_contact = null;
@@ -8,7 +8,8 @@ var selectedArray = [],
   contactArray = [];
 var contactHtml = "",
   userHtml = "";
-(function() {
+
+(function () {
   var firebase = app_fireBase;
   var uid = null;
   firebase.auth().onAuthStateChanged(function (user) {
@@ -17,9 +18,16 @@ var contactHtml = "",
       console.log("logged in as " + user.displayName);
       userName = user.displayName;
       if (userName != null) {
-        db.ref("Messages/" + userName).set({
-          message: "logged in as " + userName,
-        });
+        const userDirectory = db.ref("Messages/" + userName);
+        if (
+          !userDirectory.once("value", (snapshot) => {
+            snapshot.exists();
+          })
+        ) {
+          userDirectory.set({
+            message: "logged in as " + userName,
+          });
+        }
       }
       uid = user.uid;
     } else {
@@ -38,9 +46,6 @@ var contactHtml = "",
 
 //---------------------set the receiver--------------------//
 function selectUser(user) {
-  console.log(users);
-  var position = users.indexOf(user);
-  console.log(position);
   var selected;
   for (i = 0; i < users.length; i++) {
     if (user === users[i]) {
@@ -58,11 +63,12 @@ function selectUser(user) {
   previous_contact = user;
   receiver = user;
   document.getElementById("messages-received").innerHTML = ""; //to clear the messages
+ 
+  getSentData();
   getData(); //getting messages received from the selected contact
 }
 
 var db = firebase.database();
-
 //--------------------send a message---------------------//
 
 var input = document.getElementById("message-sent");
@@ -75,12 +81,22 @@ input.addEventListener("keyup", (event) => {
   }
 });
 function saveMessage() {
+  const timestamp = Date.now();
+  const date = new Date(timestamp);
+  let m = "am";
+  let hour = date.getHours();
+  if (hour > 12) {
+    hour = hour - 12;
+    m = "pm";
+  }
+  const time = hour + ":" + date.getMinutes() + " " + m;
+
   message = input.value;
   db.ref("Messages/" + receiver + "/" + userName).update({
     sender: userName,
     message: message,
+    time: time,
   });
-  console.log("repeat");
   getSentData();
   input.value = "";
 }
@@ -88,21 +104,19 @@ function saveMessage() {
 //------------------get message received-------------------//
 
 function getData() {
-  console.log(userName);
-
   var user_ref = db.ref("Messages/" + userName + "/" + receiver);
   user_ref.on("value", (snapshot) => {
     var data = snapshot.val();
+    
     if (data) {
       var html = "";
       html += "<li>";
       html += data.message;
-      html += "</li>";
+      html += `<span>${data.time}</span></li>`;
       document.getElementById("messages-received").innerHTML += html;
     }
   });
 }
-var p = 0;
 
 //---------------to get sent meessage ------------------------//
 function getSentData() {
@@ -110,12 +124,13 @@ function getSentData() {
   var user_ref = db.ref("Messages/" + receiver + "/" + userName);
   user_ref.once("value", (snapshot) => {
     var data = snapshot.val();
-    p++;
-    html = "";
-    html += `<li class="sent">`;
-    html += data.message;
-    html += "</li>";
-    document.getElementById("messages-received").innerHTML += html;
+    if (data) {
+      html = "";
+      html += `<li class="sent">`;
+      html += data.message;
+      html += `<span>${data.time}</span></li>`;
+      document.getElementById("messages-received").innerHTML += html;
+    }
   });
 }
 
@@ -134,8 +149,6 @@ function showContacts(userList) {
   for (let i = 0; i < userList.length; i++) {
     if (userList[i] === userName) {
       userHtml += `<li id="logged-user">`;
-      console.log("its here");
-
       userHtml += userList[i] + "(You)";
       userList.splice(i, 1);
       i--;

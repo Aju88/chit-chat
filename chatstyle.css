@@ -50,12 +50,15 @@ ul li {
   text-align: right;
   background-color: rgb(176, 202, 235);
 }
+#messages-received span,
+.sent span {
+  font-size: 12px;
+  padding-left: 5px;
+}
 #selected-contact li {
   font-weight: 600;
-
 }
-#user-contact li
-{
+#user-contact li {
   padding-left: 0.5rem;
   padding: 5px;
   background-color: #fff;
