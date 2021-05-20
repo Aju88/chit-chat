@@ -19,15 +19,9 @@ var contactHtml = "",
       userName = user.displayName;
       if (userName != null) {
         const userDirectory = db.ref("Messages/" + userName);
-        if (
-          !userDirectory.once("value", (snapshot) => {
-            snapshot.exists();
-          })
-        ) {
-          userDirectory.set({
-            message: "logged in as " + userName,
-          });
-        }
+        userDirectory.update({
+          status: "logged in as " + userName,
+        });
       }
       uid = user.uid;
     } else {
@@ -63,7 +57,7 @@ function selectUser(user) {
   previous_contact = user;
   receiver = user;
   document.getElementById("messages-received").innerHTML = ""; //to clear the messages
- 
+
   getSentData();
   getData(); //getting messages received from the selected contact
 }
@@ -107,7 +101,7 @@ function getData() {
   var user_ref = db.ref("Messages/" + userName + "/" + receiver);
   user_ref.on("value", (snapshot) => {
     var data = snapshot.val();
-    
+
     if (data) {
       var html = "";
       html += "<li>";
